@@ -78,11 +78,20 @@ const verifyEmailSchema = joi.object({
     "string.empty": "TOKEN_REQUIRED",
     "any.required": "TOKEN_REQUIRED",
   }),
-})
+});
+
+const generateRefreshTokenSchema = joi.object({
+  refresh_token: joi.string().required().messages({
+    "string.base": "REFRESH_TOKEN_REQUIRED",
+    "string.empty": "REFRESH_TOKEN_REQUIRED",
+    "any.required": "REFRESH_TOKEN_REQUIRED",
+  }),
+});
 module.exports = {
   signUpSchema,
   loginSchema,
   forgetPasswordSchema,
   resetPasswordSchema,
-  verifyEmailSchema
+  verifyEmailSchema,
+  generateRefreshTokenSchema,
 };

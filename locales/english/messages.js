@@ -1,10 +1,10 @@
 const messages = {
-    /*
+  /*
       |--------------------------------------------------------------------------
       | GENERAL MESSAGES
       |--------------------------------------------------------------------------
         */
-  };
-  
-  module.exports = { messages };
-  
+  REFRESH_TOKEN_NOT_FOUND: "Refresh token not found",
+};
+
+module.exports = { messages };

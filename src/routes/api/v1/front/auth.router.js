@@ -5,6 +5,7 @@ const {
   forgotPassword,
   resetPassword,
   verifyEmail,
+  generateRefreshToken,
 } = require("../../../../controllers");
 const { validateInput } = require("../../../../utils/validate.util");
 const {
@@ -13,6 +14,7 @@ const {
   forgetPasswordSchema,
   resetPasswordSchema,
   verifyEmailSchema,
+  generateRefreshTokenSchema,
 } = require("../../../../validations/auth.validation");
 const {
   isAuthentication,
@@ -30,6 +32,11 @@ router.post(
   "/reset-password",
   validateInput(resetPasswordSchema),
   resetPassword
+);
+router.post(
+  "/refresh-token",
+  validateInput(generateRefreshTokenSchema),
+  generateRefreshToken
 );
 router.post("/email-verify", validateInput(verifyEmailSchema), verifyEmail);
 module.exports = router;

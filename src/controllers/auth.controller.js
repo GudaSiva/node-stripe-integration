@@ -15,84 +15,6 @@ function dayToInt(day) {
   return parseInt(day, 10);
 }
 
-// register User
-const signUp = async (req, res, next) => {
-  try {
-    const { first_name, last_name, email, phone_number, password } = req.body;
-    //jf user exists
-    const userExits = await User.findOne({ where: { email } });
-    if (userExits) {
-      return res.json(errorResponse("USER_ALREADY_EXISTS"));
-    }
-    //creating user details to the database
-    const userCreate = await User.create({
-      first_name,
-      last_name,
-      email,
-      phone_number,
-      password,
-    });
-    // Prepare response data by excluding id, password, and deleted_at
-    const responseData = {
-      uuid: userCreate.uuid,
-      gender: userCreate.gender,
-      user_type: userCreate.user_type,
-      status: userCreate.status,
-      is_email_verified: userCreate.is_email_verified,
-      first_name: userCreate.first_name,
-      last_name: userCreate.last_name,
-      email: userCreate.email,
-      phone_number: userCreate.phone_number,
-      updated_at: userCreate.updated_at,
-      created_at: userCreate.created_at,
-    };
-    // Generate JWT Token for Influencer
-    const jwtToken = jwt.sign(
-      {
-        email: responseData.email,
-        id: responseData.id,
-      },
-      jwtConfig.jwtSecret,
-      { expiresIn: jwtConfig.tokenExpiration }
-    );
-
-    // Construct Email Subject and Template
-    const subject = "Registered Successfully";
-    let signUpTemplate = fs.readFileSync(
-      "resources/views/template/sign-up.template.html",
-      "utf8"
-    );
-
-    // Personalize Email Template with User Information
-    signUpTemplate = signUpTemplate.replaceAll("##first_name##", first_name);
-    signUpTemplate = signUpTemplate.replaceAll("##last_name##", last_name);
-    signUpTemplate = signUpTemplate.replaceAll("##email##", email);
-    signUpTemplate = signUpTemplate.replaceAll(
-      "##password##",
-      password // Include password might be a security risk, consider omitting
-    );
-    signUpTemplate = signUpTemplate.replaceAll(
-      "##token##",
-      `/verify-email?token=${jwtToken}`
-    );
-
-    // Send Registration Email with Verification Link
-    await sendEmail(email, subject, signUpTemplate);
-    return res.json(
-      successResponse(
-        responseData,
-        "USER_CREATED_SUCCESSFULLY",
-        httpsStatusCodes.CREATED,
-        httpResponses.CREATED
-      )
-    );
-  } catch (error) {
-    return res.json(
-      errorResponse("SOME_THING_WENT_WRONG_WHILE_CREATING_SIGN_UP")
-    );
-  }
-};
-
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -375,4 +297,97 @@ const verifyEmail = async (req, res, next) => {
   }
 };
 
-module.exports = { signUp, login, forgotPassword, resetPassword, verifyEmail };
+const generateRefreshToken = async (req, res, next) => {
+  try {
+    const { refresh_token } = req.body;
+    // Generate a Unique Token UUID
+    const tokenUUID = UUID.v4();
+    // Verify the Refresh Token
+    const decodedToken = jwt.verify(
+      refresh_token,
+      jwtConfig.refreshJwtSecretKey
+    );
+    if (!decodedToken) {
+      // Invalid Refresh Token
+      return failure(
+        "REFRESH_TOKEN_NOT_FOUND",
+        httpsStatusCodes.UNAUTHORIZED,
+        httpResponses.UNAUTHORIZED
+      );
+    }
+    // Generate a New Access Token based on Decoded Data
+    const token = jwt.sign(
+      {
+        email: decodedToken.email,
+        id: decodedToken.id,
+        tokenUUID, // Include the new token UUID
+      },
+      jwtConfig.jwtSecret,
+      {
+        expiresIn: jwtConfig.tokenExpiration, // Set expiration time for access token
+      }
+    );
+    // Find the User Token based on Decoded Refresh Token Information
+    const userToken = await UserToken.findOne({
+      where: {
+        user_id: decodedToken.id,
+        refresh_token_uuid: decodedToken.refreshTokenUUID,
+      },
+    });
+    if (!userToken) {
+      return res.json(
+        errorResponse(
+          "INVALID_REFRESH_TOKEN",
+          httpsStatusCodes.NOT_FOUND,
+          httpResponses.NOT_FOUND
+        )
+      );
+    }
+    // Calculate Expiration Time for the New Access Token
+    const expiresIn =
+      moment(jwt.verify(token, jwtConfig.jwtSecret).exp * 1000).unix() -
+      moment().unix();
+
+    // Update the User Token with the New Token UUID and Expiration Time
+    await UserToken.update(
+      {
+        token_uuid: tokenUUID,
+        token_expireAt: moment(
+          jwt.verify(token, jwtConfig.jwtSecret).exp * 1000
+        ).format(DateFormat),
+      },
+      { where: { user_id: userToken.id } }
+    );
+
+    // Prepare the Response with Access Token, Refresh Token, Expiration Info
+    const response = {
+      token,
+      refresh_token, // You might consider not including the refresh token in the response for security reasons
+      expiresIn,
+      expiresAt: moment(
+        jwt.verify(token, jwtConfig.jwtSecret).exp * 1000
+      ).format(DateFormat),
+    };
+
+    // Success Response with Refresh Token Details
+    return res.json(
+      successResponse(response, "SUCCESSFULLY_REFRESH_TOKEN_FETCHED")
+    );
+  } catch (error) {
+    return res.json(
+      errorResponse(
+        error ? error.message : "SOME_ERR_OCCUR_WHILE_VERIFY_EMAIL",
+        httpsStatusCodes.INTERNAL_SERVER_ERROR,
+        httpResponses.INTERNAL_SERVER_ERROR,
+        error
+      )
+    );
+  }
+};
+module.exports = {
+  login,
+  forgotPassword,
+  resetPassword,
+  verifyEmail,
+  generateRefreshToken,
+};
