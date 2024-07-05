@@ -8,6 +8,7 @@ const { hindiTranslations } = require("./locales/hindi");
 const { englishTranslations } = require("./locales/english");
 const { setLocalLang } = require("./src/middlewares/i18n.middleware");
 const { langConstants } = require("./src/constants");
+const stripeConfig = require("./src/configs/stripe.config");
 const app = express();
 
 app.use(cors());
@@ -31,7 +32,10 @@ i18n.configure({
 
 app.use(i18n.init);
 app.use("/api/v1", express.static("public"), require("./src/routes/api/v1"));
-
+app.set("view engine", "ejs");
+app.use("/", (req, res) => {
+  res.render("index.ejs");
+});
 app.use((req, res, next) => {
   res.__ = setLocalLang;
   next();

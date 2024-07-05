@@ -21,7 +21,7 @@ const signUpSchema = joi.object({
   }),
   phone_number: joi
     .string()
-    .pattern(/^[0-9]+$/)
+    .pattern(/^\d+$/)
     .min(10)
     .max(15)
     .required()

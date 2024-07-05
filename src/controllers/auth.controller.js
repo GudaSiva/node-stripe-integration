@@ -376,7 +376,7 @@ const generateRefreshToken = async (req, res, next) => {
   } catch (error) {
     return res.json(
       errorResponse(
-        error ? error.message : "SOME_ERR_OCCUR_WHILE_VERIFY_EMAIL",
+        error ? error.message : "SOME_ERR_OCCUR_WHILE_REFRESH_TOKEN",
         httpsStatusCodes.INTERNAL_SERVER_ERROR,
         httpResponses.INTERNAL_SERVER_ERROR,
         error
@@ -384,6 +384,7 @@ const generateRefreshToken = async (req, res, next) => {
     );
   }
 };
+
 module.exports = {
   login,
   forgotPassword,

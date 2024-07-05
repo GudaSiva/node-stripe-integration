@@ -38,6 +38,7 @@ const isAuthentication = async (req, res, next) => {
     };
     return next();
   } catch (error) {
+    console.log(/error/,error)
     return res.json(
       errorResponse(
         "SOME_THING_WENT_WRONG_WHILE_TOKEN",
