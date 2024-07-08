@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.post(
   "/create-subscription-user",
-  isAuthentication,
+  // isAuthentication,
   checkOutSession
 );
 module.exports = router;

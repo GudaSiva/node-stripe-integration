@@ -27,7 +27,7 @@ const createSubscription = async (req, res) => {
     });
     // Stripe Integration for Subscription Create
     const createStripeProductPrice = await stripe.products.create({
-      name: plan_description,
+      name: plan_title,
       description: plan_description,
       active: false,
       default_price_data: {

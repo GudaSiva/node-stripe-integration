@@ -6,6 +6,7 @@ const {
 const { SubscriptionPlan, UserSubscription } = require("../models/postgres");
 const { stripe } = require("../utils/stripe.util");
 const { errorResponse, successResponse } = require("../utils/response.util");
+const { baseUrl } = require("../configs/global.config");
 
 const checkOutSession = async (req, res) => {
   try {
@@ -36,7 +37,6 @@ const checkOutSession = async (req, res) => {
     const customer = await stripe.customers.create({
       email,
     });
-    console.log(/customer/, customer);
     // Create stripe payment checkout instance
     const session = await stripe.checkout.sessions.create({
       customer: customer.id,
@@ -44,7 +44,7 @@ const checkOutSession = async (req, res) => {
       line_items: [
         {
           price_data: {
-            name: plan.plan_title,
+            // name: plan.plan_title,
             product: plan.plan_id,
             currency: stripeConstant.stripeConfig.currency,
             unit_amount: plan.plan_price * 100,
@@ -52,16 +52,15 @@ const checkOutSession = async (req, res) => {
           quantity: 1,
         },
       ],
-      success_url: "http://localhost:3030/payment/success",
-      cancel_url: "http://localhost:3030/payment/cancel",
+      success_url: `${baseUrl}/payment/success`,
+      cancel_url: `${baseUrl}/payment/cancel`,
     });
-    console.log(/session/, session);
     await UserSubscription.create({
-      user_id: user.id,
+      user_id: user.user_id,
       subscription_plan_id: plan.id,
+      plan_title: plan.plan_title,
       stripe_subscription_id: session.id,
     });
-    console.log(/session/, session);
     const sessionResponse = {
       url: session.url,
     };

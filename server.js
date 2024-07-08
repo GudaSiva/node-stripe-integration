@@ -8,7 +8,6 @@ const { hindiTranslations } = require("./locales/hindi");
 const { englishTranslations } = require("./locales/english");
 const { setLocalLang } = require("./src/middlewares/i18n.middleware");
 const { langConstants } = require("./src/constants");
-const stripeConfig = require("./src/configs/stripe.config");
 const app = express();
 
 app.use(cors());
